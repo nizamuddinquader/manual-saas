@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\Response;
 
-class AdminMiddleware
+class SubscriptionMiddleware
 {
     /**
      * Handle an incoming request.
@@ -16,8 +16,16 @@ class AdminMiddleware
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if(Auth::user()->role !== 'admin'){
-            abort(403);
+        $user = Auth::user();
+
+    if(
+        !$user->is_active ||
+        !$user->subscription_expires_at ||
+        now()->gt($user->subscription_expires_at)
+    ){
+        Auth::logout();
+
+        return redirect('/subscription-expired');
     }
 
         return $next($request);
